@@ -12,14 +12,11 @@ Plug 'ternjs/tern_for_vim', { 'do': 'npm install && npm install -g tern' }
 
 Plug 'Valloric/YouCompleteMe'
 
-Plug 'schickling/vim-bufonly'
-
 Plug 'w0rp/ale'
-
-Plug 'tpope/vim-surround'
 
 Plug 'jiangmiao/auto-pairs'
 
+"Plug 'tpope/vim-surround'
 "Plug 'unblevable/quick-scope'
 
 call plug#end()
@@ -44,11 +41,11 @@ call plug#end()
 
     set nocompatible " neovim with vim
 
-    filetype off
-    filetype plugin on
+    set clipboard+=unnamedplus
+
+    filetype plugin indent on
 
     "Tabulation {
-        filetype plugin indent on
         set tabstop=4
         set shiftwidth=4
         set expandtab
@@ -67,6 +64,7 @@ call plug#end()
 " }
 
 " Custom mapping{
+    nnoremap \ ,
     let mapleader = ","
 
     "control keys
@@ -74,16 +72,13 @@ call plug#end()
     map <F9> :tabe $VIRTUAL_ENV/lib/python*/site-packages/<CR>
 
     "tabs navigation
-    map <tab><tab> <c-w>w
-    map <tab>l <c-w><c-l>
-    map <tab>k <c-w><c-k>
-    map <tab>h <c-w><c-h>
-    map <tab>j <c-w><c-j>
+    map - <c-w>w
+    map _ <c-w>p
 
     "buffers
     nnoremap s :bn<CR>
     nnoremap S :bp<CR>
-    nnoremap - :bd<CR>
+    nnoremap = :windo bd<CR> :bn<CR>
 
     "windows operations
     nnoremap <Leader>w :w<CR>
@@ -100,7 +95,14 @@ call plug#end()
     inoremap <c-k> <esc>m`O<esc>``a
 
     "copy current file path to work register
-    nnoremap <leader>r :let @" = expand("%")<CR>
+    function CopyModulePath()
+       let fullpath = split(expand("%"), '/')
+       let modulename = join(fullpath, ".")
+       :let @" = modulename
+    endfunction
+
+    nnoremap <leader>r :call CopyModulePath()<CR>
+    nnoremap <leader>R :let @" = expand('%')<CR>
 " }
 
 " NERDTree {
@@ -114,6 +116,7 @@ call plug#end()
     " make sure relative line numbers are used
     autocmd FileType nerdtree setlocal relativenumber
     let g:NERDTreeWinSize=35
+    let NERDTreeQuitOnOpen=1
 " }
 
 " YouCompleteMe{
@@ -145,14 +148,43 @@ ab ipdb import ipdb; ipdb.set_trace()
     map <leader>l :Lines<CR>
 " }
 
-let g:esearch = {
-  \ 'adapter':    'ag',
-  \ 'backend':    'nvim',
-  \ 'out':        'win',
-  \ 'batch_size': 1000,
-  \ 'use':        ['visual', 'hlsearch', 'last'],
-  \}
-let g:esearch#adapter#ag#options = '--ignore="*dist*" --ignore="*tags*"'
+" esearch{
+    let g:esearch = {
+      \ 'adapter':    'ag',
+      \ 'backend':    'nvim',
+      \ 'out':        'win',
+      \ 'batch_size': 1000,
+      \ 'use':        ['visual', 'hlsearch', 'last'],
+      \}
+    let g:esearch#adapter#ag#options = '--ignore="*dist*" --ignore="*tags*"'
+
+    " search with additional options
+    fu! EsearchWithOptions(argv, lang) abort
+      let original = g:esearch#adapter#ag#options
+      if a:lang == 1
+          let g:esearch#adapter#ag#options = '--py'
+      elseif a:lang == 2
+          let g:esearch#adapter#ag#options = '--js'
+      elseif a:lang == 0
+          let g:esearch#adapter#ag#options = input('Search options: ')
+      endif
+      call esearch#init(a:argv)
+      let g:esearch#adapter#ag#options = original
+    endfu
+
+    " search with input options
+    noremap  <silent><leader>F :<C-u>call EsearchWithOptions({}, 0)<CR>
+    xnoremap <silent><leader>F :<C-u>call EsearchWithOptions({'visualmode': 1})<CR>
+
+    " quick search python files
+    noremap  <silent><leader>fp :<C-u>call EsearchWithOptions({}, 1)<CR>
+    xnoremap <silent><leader>fp :<C-u>call EsearchWithOptions({'visualmode': 1})<CR>
+
+    " quick search python files
+    noremap  <silent><leader>fj :<C-u>call EsearchWithOptions({}, 2)<CR>
+    xnoremap <silent><leader>fj :<C-u>call EsearchWithOptions({'vi1ualmode': 2})<CR>
+
+" }
 
 " Relative numbers during navigation, absolute during edit.
 set number relativenumber
@@ -161,3 +193,7 @@ augroup numbertoggle
   autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
 augroup END
+
+" Commands
+command Mpu execute ":tabe | 0read ! python manage.py show_urls | grep -v 'admin'"
+
