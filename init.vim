@@ -19,6 +19,9 @@ Plug 'jiangmiao/auto-pairs'
 "Plug 'tpope/vim-surround'
 "Plug 'unblevable/quick-scope'
 
+Plug 'wikitopian/hardmode'
+Plug 'andymass/vim-matchup'
+
 call plug#end()
 
 " Custom settings{
@@ -44,6 +47,8 @@ call plug#end()
     set clipboard+=unnamedplus
 
     filetype plugin indent on
+    " enable search keys insensetive by default
+    set ignorecase
 
     "Tabulation {
         set tabstop=4
@@ -68,17 +73,22 @@ call plug#end()
     let mapleader = ","
 
     "control keys
-    map <F12> :tabe $MYVIMRC<CR>
+    nnoremap <F2> <Esc>:call ToggleHardMode()<CR>
+    map <F3> :Mpu <CR>
     map <F9> :tabe $VIRTUAL_ENV/lib/python*/site-packages/<CR>
+    map <F12> :tabe $MYVIMRC<CR>
 
     "tabs navigation
-    map - <c-w>w
-    map _ <c-w>p
+    map <space><space> <c-w>w
+    map <space>p <c-w>p
+    nnoremap <space>h <C-w>h
+    nnoremap <space>j <C-w>j
+    nnoremap <space>k <C-w>k
+    nnoremap <space>l <C-w>l
 
     "buffers
     nnoremap s :bn<CR>
     nnoremap S :bp<CR>
-    nnoremap = :windo bd<CR> :bn<CR>
 
     "windows operations
     nnoremap <Leader>w :w<CR>
@@ -93,6 +103,8 @@ call plug#end()
     nnoremap <c-j> m`o<esc>``
     inoremap <c-j> <esc>m`o<esc>``a
     inoremap <c-k> <esc>m`O<esc>``a
+
+    nnoremap <c-l> i<space><esc>
 
     "copy current file path to work register
     function CopyModulePath()
@@ -109,7 +121,8 @@ call plug#end()
     let NERDTreeIgnore = ['\.pyc$']
     let NERDTreeShowHidden=1
     map <Leader>n :NERDTreeToggle<CR>
-    map <Leader>m :NERDTreeFind<CR>
+    map <Leader>m :NERDTreeFind<CR>z.
+    let NERDTreeMapHelp='<f12>'
     let NERDTreeMapPreview="e"
     " enable line numbers
     let NERDTreeShowLineNumbers=1
@@ -120,7 +133,7 @@ call plug#end()
 " }
 
 " YouCompleteMe{
-    map <c-l> :YcmCompleter GoToDefinition <CR>
+    map ,l :YcmCompleter GoToDefinition <CR>
 " }
 
 " Ale{
@@ -145,7 +158,9 @@ ab ipdb import ipdb; ipdb.set_trace()
     map <leader>a :Marks<CR>
     map <leader>b :Buffers<CR>
     map <leader>t :Tags<CR>
-    map <leader>l :Lines<CR>
+    map <leader>f :Ag<CR>
+    "map <leader>l :Lines<CR>
+    "let $FZF_DEFAULT_COMMAND = 'ag --ignore="*dist*" --ignore="*tags*" '
 " }
 
 " esearch{
@@ -174,15 +189,15 @@ ab ipdb import ipdb; ipdb.set_trace()
 
     " search with input options
     noremap  <silent><leader>F :<C-u>call EsearchWithOptions({}, 0)<CR>
-    xnoremap <silent><leader>F :<C-u>call EsearchWithOptions({'visualmode': 1})<CR>
+    xnoremap <silent><leader>F :<C-u>call EsearchWithOptions({'visualmode': 1}, 0)<CR>
 
     " quick search python files
     noremap  <silent><leader>fp :<C-u>call EsearchWithOptions({}, 1)<CR>
-    xnoremap <silent><leader>fp :<C-u>call EsearchWithOptions({'visualmode': 1})<CR>
+    xnoremap <silent><leader>fp :<C-u>call EsearchWithOptions({'visualmode': 1}, 1)<CR>
 
     " quick search python files
     noremap  <silent><leader>fj :<C-u>call EsearchWithOptions({}, 2)<CR>
-    xnoremap <silent><leader>fj :<C-u>call EsearchWithOptions({'vi1ualmode': 2})<CR>
+    xnoremap <silent><leader>fj :<C-u>call EsearchWithOptions({'visualmode': 1}, 2)<CR>
 
 " }
 
@@ -197,3 +212,4 @@ augroup END
 " Commands
 command Mpu execute ":tabe | 0read ! python manage.py show_urls | grep -v 'admin'"
 
+autocmd VimEnter,BufNewFile,BufReadPost * silent! call HardMode()
