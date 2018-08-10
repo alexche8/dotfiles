@@ -10,6 +10,7 @@ Plug 'https://github.com/scrooloose/nerdtree.git'
 Plug 'https://github.com/eugen0329/vim-esearch'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
+Plug 'Shougo/denite.nvim'
 
 "navigation
 Plug 'unblevable/quick-scope'
@@ -26,14 +27,22 @@ Plug 'w0rp/ale'
 " pairs
 Plug 'jiangmiao/auto-pairs'
 Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
 
 " mapping
 Plug 'https://github.com/tpope/vim-unimpaired'
 
-" learning
-Plug 'wikitopian/hardmode'
+" editing
+Plug 'https://github.com/mattn/emmet-vim'
+Plug 'https://github.com/tpope/vim-commentary'
 
-"Plug 'https://github.com/tpope/vim-commentary'
+" javascript
+Plug 'pangloss/vim-javascript'
+Plug 'mxw/vim-jsx'
+Plug 'prettier/vim-prettier', { 'do': 'yarn install' }
+
+" buffers
+Plug 'jlanzarotta/bufexplorer'
 
 call plug#end()
 
@@ -67,7 +76,10 @@ call plug#end()
 
     runtime macros/matchit.vim
 
-    set cursorline
+    set cursorline cursorcolumn
+    tnoremap <ESC> <C-\><C-n>
+    " for tpope comments 
+    autocmd FileType apache setlocal commentstring=#\ %s<Paste>
 
     "Tabulation {
         set tabstop=4
@@ -94,31 +106,42 @@ call plug#end()
     let mapleader = ","
 
     "control keys
-    nnoremap <F2> <Esc>:call ToggleHardMode()<CR>
     map <F3> :Mpu <CR>
+    map <F4> :terminal<CR>
+    map <F5> :set nopaste
     map <F9> :tabe $VIRTUAL_ENV/lib/python*/site-packages/<CR>
     map <F12> :tabe $MYVIMRC<CR>
 
     "tabs and windows navigation
-    map <space><space> <c-w>w
-    map <space>p <c-w>p
+    nnoremap <C-h> <C-w>h
+    nnoremap <C-j> <C-w>j
+    nnoremap <C-k> <C-w>k
+    nnoremap <C-l> <C-w>l
 
     "windows operations
     nnoremap <Leader>w :w<CR>
     nnoremap <Leader>q :q<CR>
 
+    "window splits
+    nnoremap <Leader>v :vsplit<CR>
+    nnoremap <Leader>s :split<CR>
+
     "registers
-    nnoremap <space>r :registers<CR>
+    nnoremap <leader>r :registers<CR>
+
+    "buffers
+    nnoremap <leader>d :bdelete<CR>
 
     "copy current file path to work register
     function CopyModulePath()
        let fullpath = split(expand("%"), '/')
        let modulename = join(fullpath, ".")
-       :let @" = modulename
+       :let @m = modulename
+       :let @p = expand('%')
+       :let @+ = expand('%')
     endfunction
 
-    nnoremap <leader>r :call CopyModulePath()<CR>
-    nnoremap <leader>R :let @" = expand('%')<CR>
+    nnoremap <leader>y :call CopyModulePath()<CR>
 " }
 
 " NERDTree {
@@ -146,6 +169,8 @@ call plug#end()
    \ 'python': ['flake8']
    \ }
    let g:ale_python_flake8_options = '--append-config=~/.config/flake8'
+   let g:ale_sign_warning = '.'
+   let g:ale_lint_on_enter = 0 " Less distracting when opening a new file
 " }
 "
 
@@ -153,12 +178,14 @@ call plug#end()
 ab pdb import pdb; pdb.set_trace()
 ab pudb import pudb; pudb.set_trace()
 ab ipdb import ipdb; ipdb.set_trace()
+ab csl console.log
+ab dbg debugger;
 
 
 " Fzf {
     map <c-p> :Files<CR>
     map <leader>h :History<CR>
-    map <leader>v :Files $VIRTUAL_ENV<CR>
+    map <leader>e :Files $VIRTUAL_ENV<CR>
     map <leader>a :Marks<CR>
     map <leader>b :Buffers<CR>
     map <leader>t :Tags<CR>
@@ -177,34 +204,16 @@ ab ipdb import ipdb; ipdb.set_trace()
       \ 'use':        ['visual', 'hlsearch', 'last'],
       \}
     let g:esearch#adapter#ag#options = '--ignore="*dist*" --ignore="*tags*"'
-
-    " search with additional options
-    fu! EsearchWithOptions(argv, lang) abort
-      let original = g:esearch#adapter#ag#options
-      if a:lang == 1
-          let g:esearch#adapter#ag#options = '--py'
-      elseif a:lang == 2
-          let g:esearch#adapter#ag#options = '--js'
-      elseif a:lang == 0
-          let g:esearch#adapter#ag#options = input('Search options: ')
-      endif
-      call esearch#init(a:argv)
-      let g:esearch#adapter#ag#options = original
-    endfu
-
-    " search with input options
-    noremap  <silent><leader>F :<C-u>call EsearchWithOptions({}, 0)<CR>
-    xnoremap <silent><leader>F :<C-u>call EsearchWithOptions({'visualmode': 1}, 0)<CR>
-
-    " quick search python files
-    noremap  <silent><leader>fp :<C-u>call EsearchWithOptions({}, 1)<CR>
-    xnoremap <silent><leader>fp :<C-u>call EsearchWithOptions({'visualmode': 1}, 1)<CR>
-
-    " quick search python files
-    noremap  <silent><leader>fj :<C-u>call EsearchWithOptions({}, 2)<CR>
-    xnoremap <silent><leader>fj :<C-u>call EsearchWithOptions({'visualmode': 1}, 2)<CR>
-
 " }
+
+" emment-vim
+let g:user_emmet_leader_key='<C-SPACE>'
+let g:user_emmet_settings = {
+  \  'javascript.jsx' : {
+    \      'extends' : 'jsx',
+    \  },
+  \}
+
 
 " Relative numbers during navigation, absolute during edit.
 set number relativenumber
@@ -215,4 +224,5 @@ augroup numbertoggle
 augroup END
 
 " Commands
+" Show available django urls in project(without admin urls)
 command Mpu execute ":tabe | 0read ! python manage.py show_urls | grep -v 'admin'"
