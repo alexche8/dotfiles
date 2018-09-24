@@ -1,16 +1,16 @@
 call plug#begin()
 
-" colors
+" visual
 Plug 'https://github.com/morhetz/gruvbox'
+Plug 'https://github.com/RRethy/vim-illuminate'
 
 " file explorer
 Plug 'https://github.com/scrooloose/nerdtree.git'
 
 "search
-Plug 'https://github.com/eugen0329/vim-esearch'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
-Plug 'Shougo/denite.nvim'
+Plug 'https://github.com/eugen0329/vim-esearch'
 
 "navigation
 Plug 'unblevable/quick-scope'
@@ -19,6 +19,7 @@ Plug 'andymass/vim-matchup'
 " autocomplete
 Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 Plug 'Valloric/YouCompleteMe'
+Plug 'https://github.com/davidhalter/jedi-vim'
 
 " syntax
 Plug 'ternjs/tern_for_vim', { 'do': 'npm install && npm install -g tern' }
@@ -35,14 +36,19 @@ Plug 'https://github.com/tpope/vim-unimpaired'
 " editing
 Plug 'https://github.com/mattn/emmet-vim'
 Plug 'https://github.com/tpope/vim-commentary'
+Plug 'https://github.com/SirVer/ultisnips'
+Plug 'https://github.com/honza/vim-snippets'
 
 " javascript
 Plug 'pangloss/vim-javascript'
 Plug 'mxw/vim-jsx'
 Plug 'prettier/vim-prettier', { 'do': 'yarn install' }
 
-" buffers
-Plug 'jlanzarotta/bufexplorer'
+" statusline
+Plug 'https://github.com/vim-airline/vim-airline'
+
+" learn
+Plug 'takac/vim-hardtime'
 
 call plug#end()
 
@@ -85,7 +91,7 @@ call plug#end()
         set tabstop=4
         set shiftwidth=4
         set expandtab
-        autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
+        autocmd FileType javascript setlocal shiftwidth=2 tabstop=2 softtabstop=0 expandtab
         "FileType js setlocal shiftwidth=2 tabstop=4
 
         " Tell Vim which characters to show for expanded TABs,
@@ -99,6 +105,7 @@ call plug#end()
         highlight ExtraWhitespace ctermbg=darkgreen guibg=darkgreen
         match ExtraWhitespace /\s\+$\|\t/
     "}
+    autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
 " }
 
 " Custom mapping{
@@ -107,9 +114,13 @@ call plug#end()
 
     "control keys
     map <F3> :Mpu <CR>
-    map <F4> :terminal<CR>
-    map <F5> :set nopaste
+    map <F4> :CtagsUpdate <CR>
+    map <F5> :terminal<CR>
+    set pastetoggle=<F6>
     map <F9> :tabe $VIRTUAL_ENV/lib/python*/site-packages/<CR>
+
+    map <F7> :PlugInstall<CR>
+    map <F8> :PlugClean<CR>
     map <F12> :tabe $MYVIMRC<CR>
 
     "tabs and windows navigation
@@ -122,18 +133,20 @@ call plug#end()
     nnoremap <Leader>w :w<CR>
     nnoremap <Leader>q :q<CR>
 
-    "window splits
-    nnoremap <Leader>v :vsplit<CR>
-    nnoremap <Leader>s :split<CR>
-
     "registers
     nnoremap <leader>r :registers<CR>
 
     "buffers
-    nnoremap <leader>d :bdelete<CR>
+    "nnoremap <leader>z :bp\|bd #<CR> :bn<CR>
+
+    "delete buffer
+    nnoremap <leader>x :bd<CR>
+    "delete buffer but keep window
+    nnoremap <leader>z :bp\|bd #<CR>
+    nnoremap <leader>v :buffers<CR>
 
     "copy current file path to work register
-    function CopyModulePath()
+    function! CopyModulePath()
        let fullpath = split(expand("%"), '/')
        let modulename = join(fullpath, ".")
        :let @m = modulename
@@ -142,43 +155,62 @@ call plug#end()
     endfunction
 
     nnoremap <leader>y :call CopyModulePath()<CR>
+    nnoremap <A-l> :ReloadVimrc <CR>
 " }
 
 " NERDTree {
     let NERDTreeIgnore = ['\.pyc$']
     let NERDTreeShowHidden=1
-    map <Leader>n :NERDTreeToggle<CR>
-    map <Leader>m :NERDTreeFind<CR>z.
-    let NERDTreeMapHelp='<f12>'
-    let NERDTreeMapPreview="e"
     " enable line numbers
     let NERDTreeShowLineNumbers=1
     " make sure relative line numbers are used
     autocmd FileType nerdtree setlocal relativenumber
     let g:NERDTreeWinSize=35
     let NERDTreeQuitOnOpen=1
+
+    " mapping
+    map <Leader>m :NERDTreeFind<CR>z.
+    map <Leader>n :NERDTreeToggle<CR>
+    let NERDTreeMapOpenVSplit='v'
+    let NERDTreeMapOpenSplit='x'
+    let NERDTreeMapCloseDir='i'
+    let NERDTreeMapPreview="e"
+    let NERDTreeMapHelp='<f12>'
 " }
 
 " YouCompleteMe{
-    map ,l :YcmCompleter GoToDefinition <CR>
+    map <leader>l :YcmCompleter GoToDefinition <CR>
 " }
 
 " Ale{
+   " common and python
    let g:ale_python_pylint_executable = 'python'
    let g:ale_linters = {
    \ 'python': ['flake8']
    \ }
-   let g:ale_python_flake8_options = '--append-config=~/.config/flake8'
-   let g:ale_sign_warning = '.'
+   let g:ale_python_flake8_options = '--config max-line-length = 79'
+   let g:ale_sign_error = 'x'
+   let g:ale_sign_warning = '~'
    let g:ale_lint_on_enter = 0 " Less distracting when opening a new file
+
+   let g:ale_fixers = {
+    \   'javascript': [
+    \      'prettier', 'eslint' 
+    \   ]
+    \}
+
+    nmap <A-f> :ALEFix<CR>
 " }
 "
+
+" illuminate{
+   let g:Illuminate_ftblacklist = ['nerdtree']
+" }
 
 " Abbreviatures
 ab pdb import pdb; pdb.set_trace()
 ab pudb import pudb; pudb.set_trace()
 ab ipdb import ipdb; ipdb.set_trace()
-ab csl console.log
 ab dbg debugger;
 
 
@@ -189,13 +221,12 @@ ab dbg debugger;
     map <leader>a :Marks<CR>
     map <leader>b :Buffers<CR>
     map <leader>t :Tags<CR>
-    map <leader>f :Ag<CR>
-    "map <leader>l :Lines<CR>
-    autocmd VimEnter * command! -bang -nargs=* Ag
-        \ call fzf#vim#ag(<q-args>, '--ignore="*dist*" --ignore="*tags*"', <bang>0)
+    map <leader>s :Lines<CR>
+    let g:fzf_tags_command = 'ctags -R --exclude=.git --exclude=node_modules --exclude="*static/dist*" --exclude="*static/vendor*" --exclude="*.css" --exclude="*cassettes*"'
+    autocmd! FileType fzf tnoremap <buffer> <leader>q <c-c>
 " }
 
-" esearch{
+"  esearch{
     let g:esearch = {
       \ 'adapter':    'ag',
       \ 'backend':    'nvim',
@@ -204,16 +235,30 @@ ab dbg debugger;
       \ 'use':        ['visual', 'hlsearch', 'last'],
       \}
     let g:esearch#adapter#ag#options = '--ignore="*dist*" --ignore="*tags*"'
+    fu! EsearchInFiles(argv) abort
+      let original = g:esearch#adapter#ag#options
+      let g:esearch#adapter#ag#options = input('Search options: ')
+      call esearch#init(a:argv)
+      let g:esearch#adapter#ag#options = original
+    endfu
+
+    " replace these mapping with the ones you prefer
+    noremap  <silent><leader>ft :<C-u>call EsearchInFiles({})<CR>
+    xnoremap <silent><leader>ft :<C-u>call EsearchInFiles({'visualmode': 1})<CR>
+    noremap <silent><leader>fa :Ag<CR>
 " }
 
-" emment-vim
-let g:user_emmet_leader_key='<C-SPACE>'
+" jedi{
+  let g:jedi#usages_command = "<Leader>u"
+" }
+
+" emment-vim{
 let g:user_emmet_settings = {
   \  'javascript.jsx' : {
     \      'extends' : 'jsx',
     \  },
   \}
-
+" }
 
 " Relative numbers during navigation, absolute during edit.
 set number relativenumber
@@ -223,6 +268,24 @@ augroup numbertoggle
   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
 augroup END
 
+" ultisnips{
+    let g:UltiSnipsExpandTrigger = '<A-h>'
+    let g:UltiSnipsJumpForwardTrigger = '<A-j>'
+    let g:UltiSnipsJumpBackwardTrigger = '<A-k>'
+" }
+
+" hardtime {
+    let g:hardtime_default_on = 0
+" }
+
+" ctags{
+    map <A-u> :CtagsUpdate <CR>
+" }
+
 " Commands
 " Show available django urls in project(without admin urls)
-command Mpu execute ":tabe | 0read ! python manage.py show_urls | grep -v 'admin'"
+command! Mpu execute ":tabe | 0read ! python manage.py show_urls | grep -v 'admin'"
+" Update ctags from fzf command
+command! CtagsUpdate call system(get(g:, 'fzf_tags_command')) | echo "tags updated"
+" Reload vimrc
+command! ReloadVimrc execute ":so $MYVIMRC | echo 'init.vim reloaded'"
