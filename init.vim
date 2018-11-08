@@ -1,8 +1,12 @@
 call plug#begin()
 
+" meta
+"Plug 'https://github.com/liuchengxu/vim-which-key'
+
 " visual
 Plug 'https://github.com/morhetz/gruvbox'
 Plug 'https://github.com/RRethy/vim-illuminate'
+"Plug 'ryanoasis/vim-devicons'
 
 " file explorer
 Plug 'https://github.com/scrooloose/nerdtree.git'
@@ -15,6 +19,7 @@ Plug 'https://github.com/eugen0329/vim-esearch'
 "navigation
 Plug 'unblevable/quick-scope'
 Plug 'andymass/vim-matchup'
+Plug 'jeetsukumaran/vim-pythonsense'
 
 " autocomplete
 Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
@@ -112,9 +117,11 @@ call plug#end()
     nnoremap \ ,
     let mapleader = ","
 
+    "navigation
+
     "control keys
     map <F3> :Mpu <CR>
-    map <F4> :CtagsUpdate <CR>
+    "map <F4> :CtagsUpdate <CR>
     map <F5> :terminal<CR>
     set pastetoggle=<F6>
     map <F9> :tabe $VIRTUAL_ENV/lib/python*/site-packages/<CR>
@@ -131,19 +138,22 @@ call plug#end()
 
     "windows operations
     nnoremap <Leader>w :w<CR>
-    nnoremap <Leader>q :q<CR>
-
-    "registers
-    nnoremap <leader>r :registers<CR>
+    "register
+    nnoremap <Leader>. :registers<CR>
 
     "buffers
     "nnoremap <leader>z :bp\|bd #<CR> :bn<CR>
 
+    "close tab but keep buffer
+    nnoremap <Leader>q :q<CR>
     "delete buffer
     nnoremap <leader>x :bd<CR>
     "delete buffer but keep window
     nnoremap <leader>z :bp\|bd #<CR>
     nnoremap <leader>v :buffers<CR>
+    "alt key file operations
+    nnoremap <leader>fe :edit!<CR>
+    nnoremap <leader>fq :quit!<CR>
 
     "copy current file path to work register
     function! CopyModulePath()
@@ -155,7 +165,8 @@ call plug#end()
     endfunction
 
     nnoremap <leader>y :call CopyModulePath()<CR>
-    nnoremap <A-l> :ReloadVimrc <CR>
+    nnoremap <A-'> :ReloadVimrc <CR>
+
 " }
 
 " NERDTree {
@@ -189,14 +200,16 @@ call plug#end()
    \ 'python': ['flake8']
    \ }
    let g:ale_python_flake8_options = '--config max-line-length = 79'
+   let g:ale_python_autopep8_options = '--global-config ~/.config/flake8'
    let g:ale_sign_error = 'x'
    let g:ale_sign_warning = '~'
    let g:ale_lint_on_enter = 0 " Less distracting when opening a new file
 
    let g:ale_fixers = {
     \   'javascript': [
-    \      'prettier', 'eslint' 
-    \   ]
+    \      'prettier', 'eslint'
+    \   ],
+    \   'python': ['autopep8']
     \}
 
     nmap <A-f> :ALEFix<CR>
@@ -207,21 +220,21 @@ call plug#end()
    let g:Illuminate_ftblacklist = ['nerdtree']
 " }
 
-" Abbreviatures
-ab pdb import pdb; pdb.set_trace()
-ab pudb import pudb; pudb.set_trace()
-ab ipdb import ipdb; ipdb.set_trace()
-ab dbg debugger;
-
 
 " Fzf {
     map <c-p> :Files<CR>
-    map <leader>h :History<CR>
+
     map <leader>e :Files $VIRTUAL_ENV<CR>
+
     map <leader>a :Marks<CR>
     map <leader>b :Buffers<CR>
     map <leader>t :Tags<CR>
     map <leader>s :Lines<CR>
+
+    map <leader>h :History<CR>
+    map <leader>: :History:<CR>
+    map <leader>/ :History/<CR>
+
     let g:fzf_tags_command = 'ctags -R --exclude=.git --exclude=node_modules --exclude="*static/dist*" --exclude="*static/vendor*" --exclude="*.css" --exclude="*cassettes*"'
     autocmd! FileType fzf tnoremap <buffer> <leader>q <c-c>
 " }
@@ -234,7 +247,10 @@ ab dbg debugger;
       \ 'batch_size': 1000,
       \ 'use':        ['visual', 'hlsearch', 'last'],
       \}
+    call esearch#out#win#map('x', 'split')
+    call esearch#out#win#map('v', 'vsplit')
     let g:esearch#adapter#ag#options = '--ignore="*dist*" --ignore="*tags*"'
+
     fu! EsearchInFiles(argv) abort
       let original = g:esearch#adapter#ag#options
       let g:esearch#adapter#ag#options = input('Search options: ')
@@ -269,9 +285,9 @@ augroup numbertoggle
 augroup END
 
 " ultisnips{
-    let g:UltiSnipsExpandTrigger = '<A-h>'
-    let g:UltiSnipsJumpForwardTrigger = '<A-j>'
-    let g:UltiSnipsJumpBackwardTrigger = '<A-k>'
+    let g:UltiSnipsExpandTrigger = '<A-Enter>'
+    "let g:UltiSnipsJumpForwardTrigger = '<A-j>'
+    "let g:UltiSnipsJumpBackwardTrigger = '<A-k>'
 " }
 
 " hardtime {
@@ -281,6 +297,11 @@ augroup END
 " ctags{
     map <A-u> :CtagsUpdate <CR>
 " }
+
+" vim-pythonsence{
+   let g:is_pythonsense_suppress_motion_keymaps = 1
+"}
+
 
 " Commands
 " Show available django urls in project(without admin urls)
